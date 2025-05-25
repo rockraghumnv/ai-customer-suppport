@@ -52,12 +52,6 @@ Visit [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) to access the
 ## Docker Usage (Optional)
 - Complete the `Dockerfile` for containerized deployment.
 
-## Next Steps
-- Implement views, serializers, and API endpoints in the `support` app.
-- Register models in `support/admin.py`.
-- Add tests in `support/tests.py`.
-- Integrate AI/ML features as needed.
-
 ## Production Deployment (Docker + Gunicorn)
 
 1. Build and run with Docker:
