@@ -1,58 +1,97 @@
 import os
-# Import necessary libraries and agents
-from .faq_agent import FAQAgent # Example import
-# from .troubleshooting_agent import TroubleshootingAgent # Example import
-# from .ticket_creation_agent import TicketCreationAgent # Example import
-from support.models import Ticket # Import Ticket model
+from .faq_agent import FAQAgent
+from .info_agent import InfoAgent
+from .troubleshooting_agent import TroubleshootingAgent
+from .general_purpose_agent import GeneralPurposeAgent
+from support.models import Ticket
+
+# In-memory context store for demo/testing
+CHAT_CONTEXT = {}
+
+def get_context(user_email):
+    return CHAT_CONTEXT.get(user_email, [])
+
+def update_context(user_email, message):
+    if user_email not in CHAT_CONTEXT:
+        CHAT_CONTEXT[user_email] = []
+    CHAT_CONTEXT[user_email].append(message)
+    if len(CHAT_CONTEXT[user_email]) > 10:
+        CHAT_CONTEXT[user_email] = CHAT_CONTEXT[user_email][-10:]
 
 def route_query_to_agent(query: str, company, user_email):
-    """Routes the user query to the appropriate AI agent."""
-    # This is a simplified routing logic.
-    # In a real application, this would involve more sophisticated NLP and AI.
+    context = get_context(user_email)
+    update_context(user_email, {"role": "user", "content": query})
 
-    # Example: Check if the query can be answered by the FAQ agent using RAG
-    # You would implement the RAG logic here or call a function that does it.
-    # For now, let's simulate a response or trigger ticket creation.
+    # 1. FAQ Agent
+    faq_agent = FAQAgent(company)
+    faq_response = faq_agent.handle_query(query, context=context)
+    if faq_response and not faq_response.get('fallback', False):
+        update_context(user_email, {"role": "agent", "content": faq_response['response']})
+        return faq_response['response']
 
-    # Placeholder logic:
-    if "FAQ" in query.upper() or "frequently asked questions" in query.lower():
-        # In a real scenario, call the FAQ agent and use RAG
-        faq_agent = FAQAgent(company)
-        response = faq_agent.handle_query(query)
-        if response:
-            return response
-        # return "This is a simulated response from the FAQ agent."
+    # 2. Info Agent
+    info_agent = InfoAgent(company)
+    info_response = info_agent.handle_query(query, context=context)
+    if info_response and not info_response.get('fallback', False):
+        update_context(user_email, {"role": "agent", "content": info_response['response']})
+        return info_response['response']
 
-    elif "troubleshoot" in query.lower() or "fix" in query.lower():
-        # In a real scenario, call the Troubleshooting agent
-        # troubleshooting_agent = TroubleshootingAgent(company)
-        # response = troubleshooting_agent.handle_query(query)
-        # if response:
-        #     return response
-         return "This is a simulated response from the Troubleshooting agent."
+    # 3. Troubleshooting Agent
+    troubleshooting_agent = TroubleshootingAgent(company)
+    troubleshooting_response = troubleshooting_agent.handle_query(query, context=context)
+    if troubleshooting_response and not troubleshooting_response.get('fallback', False):
+        update_context(user_email, {"role": "agent", "content": troubleshooting_response['response']})
+        return troubleshooting_response['response']
 
-    # If no specific agent can handle the query, trigger ticket creation
-    else:
-        # In a real scenario, call the Ticket Creation agent
-        # ticket_creation_agent = TicketCreationAgent(company)
-        # ticket_details = ticket_creation_agent.extract_ticket_details(query)
+    # 4. General Purpose Agent
+    general_agent = GeneralPurposeAgent(company)
+    general_response = general_agent.handle_query(query, context=context)
+    if general_response and not general_response.get('fallback', False):
+        update_context(user_email, {"role": "agent", "content": general_response['response']})
+        return general_response['response']
 
-        # Create the ticket using the backend API
-        # For MVP, subject can be the first part of the query or a default
-        subject = query[:100] if len(query) > 100 else query
-        ticket = Ticket.objects.create(
-            company=company,
-            user_email=user_email,
-            subject=f"Support Request: {subject}",
-            description=query,
-            assigned_to=None  # Assign to None initially, indicating it's unassigned
-        )
-        # Assign to a human agent (this is a conceptual step)
-        # In a real system, you might have an 'assigned_to' field on the Ticket model
-        # and assign it to a default human agent or queue here.
-        print(f"Ticket created: {ticket.id} for {user_email} at {company.name}. Needs human agent attention.")
+    # 5. Fallback: Create a ticket
+    ticket = Ticket.objects.create(
+        company=company,
+        user_email=user_email,
+        subject=f"Support Request: {query[:100]}",
+        description=query,
+        assigned_to=None
+    )
+    print(f"Ticket created: {ticket.id} for {user_email} at {company.name}. Needs human agent attention.")
+    return ticket
 
-        return ticket # Return the created ticket object
-
-    # Note: You would need to implement the actual AI agents (FAQAgent, etc.)
-    # and their logic for interacting with the knowledge base and potentially creating tickets.
+def route_query_to_agent(query, company, user_email):
+    # Example: Try FAQ agent first
+    answer, confidence = None, 0.0
+    try:
+        answer, confidence = faq_agent.get_answer(query, company)
+    except Exception:
+        pass
+    if answer and confidence > 0.7:
+        return answer
+    # Try info agent
+    try:
+        answer, confidence = info_agent.get_answer(query, company)
+    except Exception:
+        pass
+    if answer and confidence > 0.7:
+        return answer
+    # Try troubleshooting agent
+    try:
+        answer, confidence = troubleshooting_agent.get_answer(query, company)
+    except Exception:
+        pass
+    if answer and confidence > 0.7:
+        return answer
+    # Try general purpose agent
+    try:
+        answer, confidence = general_purpose_agent.get_answer(query, company)
+    except Exception:
+        pass
+    if answer and confidence > 0.7:
+        return answer
+    # Fallback: create ticket and explain
+    explanation = "No confident answer found (confidence below threshold or no answer). Escalating to human agent."
+    ticket = ticket_creation_agent.create_ticket(query, company, user_email, explanation)
+    return ticket
