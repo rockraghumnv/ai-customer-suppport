@@ -15,7 +15,7 @@ from PIL import Image
 import io
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from langchain_google_genai import GoogleGenerativeAI
 import pytesseract
@@ -46,6 +46,17 @@ class FileUploadView(generics.CreateAPIView):
 
         if not company_id or not uploaded_file:
             return Response({'error': 'Company ID and file are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # File type validation
+        allowed_types = [
+            'text/plain', 'application/pdf', 'application/json',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/png', 'image/jpeg', 'image/jpg', 'image/bmp', 'image/gif', 'image/webp'
+        ]
+        if uploaded_file.content_type not in allowed_types:
+            return Response({'error': f'Unsupported file type: {uploaded_file.content_type}'}, status=status.HTTP_400_BAD_REQUEST)
+        if uploaded_file.size > 10 * 1024 * 1024:  # 10MB limit
+            return Response({'error': 'File too large (max 10MB).'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             company = Company.objects.get(id=company_id)
@@ -209,13 +220,14 @@ class CopilotSummaryView(APIView):
         chat_history = ChatMessage.objects.filter(ticket=ticket).order_by('created_at')
         conversation = '\n'.join([f"{msg.sender}: {msg.message}" for msg in chat_history])
         # Use Gemini to summarize and suggest
-        gemini = GoogleGenerativeAI(model="models/gemini-pro")
+        gemini = GoogleGenerativeAI(model="models/gemini-1.5-flash")
         prompt = f"Summarize the following support conversation and suggest next actions for the agent.\n\n{conversation}"
-        summary = gemini.generate(prompt)
+        summary = gemini.generate([prompt])
         return Response({'summary': summary, 'conversation': conversation}, status=status.HTTP_200_OK)
 
 # --- User Registration & Login (Demo) ---
 class UserRegisterView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -228,6 +240,7 @@ class UserRegisterView(APIView):
         return Response({'token': token.key})
 
 class UserLoginView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         from django.contrib.auth import authenticate
         username = request.data.get('username')
@@ -261,7 +274,7 @@ class AgentPerformanceView(APIView):
         messages = ChatMessage.objects.filter(user_email=agent_username, sender='agent')
         transcript = '\n'.join([m.message for m in messages])
         # Use Gemini to analyze
-        gemini = GoogleGenerativeAI(model="models/gemini-pro")
+        gemini = GoogleGenerativeAI(model="models/gemini-1.5-flash")
         prompt = f"Analyze the following agent transcript for politeness, effectiveness, and suggest improvements.\n{transcript}"
         analysis = gemini.generate(prompt)
         return Response({'performance_analysis': analysis})
@@ -273,7 +286,7 @@ class OperationsSummaryView(APIView):
         tickets = Ticket.objects.filter(company_id=company_id)
         summary = f"Total tickets: {tickets.count()}\nOpen: {tickets.filter(status='open').count()}\nClosed: {tickets.filter(status='closed').count()}"
         # Use Gemini for trends
-        gemini = GoogleGenerativeAI(model="models/gemini-pro")
+        gemini = GoogleGenerativeAI(model="models/gemini-1.5-flash")
         prompt = f"Summarize support operations and trends for the following ticket data:\n{summary}"
         ai_summary = gemini.generate(prompt)
         return Response({'summary': ai_summary, 'raw': summary})
@@ -284,7 +297,7 @@ class CXOptimizationView(APIView):
     def get(self, request, company_id):
         messages = ChatMessage.objects.filter(company_id=company_id)
         transcript = '\n'.join([m.message for m in messages])
-        gemini = GoogleGenerativeAI(model="models/gemini-pro")
+        gemini = GoogleGenerativeAI(model="models/gemini-1.5-flash")
         prompt = f"Analyze customer sentiment, root causes of issues, and suggest proactive support actions for this transcript:\n{transcript}"
         result = gemini.generate(prompt)
         return Response({'cx_optimization': result})
@@ -294,7 +307,7 @@ class TicketAutomationView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         description = request.data.get('description')
-        gemini = GoogleGenerativeAI(model="models/gemini-pro")
+        gemini = GoogleGenerativeAI(model="models/gemini-1.5-flash")
         prompt = f"Categorize, prioritize, and suggest incident links for this ticket description:\n{description}"
         result = gemini.generate(prompt)
         return Response({'automation': result})
@@ -304,7 +317,7 @@ class KnowledgeBaseImprovementView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, company_id):
         faqs = getattr(Company.objects.get(id=company_id), 'faqs', [])
-        gemini = GoogleGenerativeAI(model="models/gemini-pro")
+        gemini = GoogleGenerativeAI(model="models/gemini-1.5-flash")
         prompt = f"Analyze these FAQs and suggest improvements or missing topics:\n{faqs}"
         result = gemini.generate(prompt)
         return Response({'kb_improvement': result})

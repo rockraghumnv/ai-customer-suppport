@@ -3,6 +3,7 @@ from .faq_agent import FAQAgent
 from .info_agent import InfoAgent
 from .troubleshooting_agent import TroubleshootingAgent
 from .general_purpose_agent import GeneralPurposeAgent
+from .ticket_creation_agent import ticket_creation_agent
 from support.models import Ticket
 
 # In-memory context store for demo/testing
@@ -93,5 +94,13 @@ def route_query_to_agent(query, company, user_email):
         return answer
     # Fallback: create ticket and explain
     explanation = "No confident answer found (confidence below threshold or no answer). Escalating to human agent."
-    ticket = ticket_creation_agent.create_ticket(query, company, user_email, explanation)
+    ticket_agent = ticket_creation_agent(company)
+    ticket_details = ticket_agent.extract_ticket_details(query)
+    ticket = Ticket.objects.create(
+        company=company,
+        user_email=user_email,
+        subject=ticket_details.subject,
+        description=ticket_details.description + "\n\n" + explanation,
+        status='open'
+    )
     return ticket

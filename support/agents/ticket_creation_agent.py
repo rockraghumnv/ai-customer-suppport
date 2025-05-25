@@ -3,7 +3,7 @@ from django.conf import settings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 class TicketDetails(BaseModel):
     subject: str = Field(description="Concise summary of the user's issue.")
@@ -12,7 +12,7 @@ class TicketDetails(BaseModel):
 class TicketCreationAgent:
     def __init__(self, company):
         self.company = company
-        self.llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model="models/gemini-1.5-flash", temperature=0)
         self.parser = PydanticOutputParser(pydantic_object=TicketDetails)
         self.prompt = ChatPromptTemplate.from_messages([
             ("system", "Extract the subject and description for a support ticket from the following user query.\n{format_instructions}"),
@@ -27,3 +27,5 @@ class TicketCreationAgent:
         except Exception as e:
             print(f"Error during ticket details extraction: {e}")
             return TicketDetails(subject="Support Request", description=query)
+
+ticket_creation_agent = TicketCreationAgent

@@ -9,7 +9,7 @@ class TroubleshootingAgent:
     def __init__(self, company):
         self.company = company
         self.chroma_dir = os.path.join(settings.BASE_DIR, f'chroma_db_{self.company.id}')
-        self.llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model="models/gemini-1.5-flash", temperature=0)
         self.vectorstore = Chroma(persist_directory=self.chroma_dir, embedding_function=self.llm.embeddings)
         self.retriever = self.vectorstore.as_retriever()
         self.prompt = ChatPromptTemplate.from_template("""You are a troubleshooting agent. Use the following context to guide the user through troubleshooting steps for their issue.\n{context}\n\nQuestion: {question}""")
