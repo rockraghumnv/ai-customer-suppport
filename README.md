@@ -58,6 +58,57 @@ Visit [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) to access the
 - Add tests in `support/tests.py`.
 - Integrate AI/ML features as needed.
 
+## Production Deployment (Docker + Gunicorn)
+
+1. Build and run with Docker:
+```sh
+docker build -t ai-support-platform .
+docker run -d -p 8000:8000 --env DJANGO_SUPERUSER_PASSWORD=admin ai-support-platform
+```
+
+2. Or run with Gunicorn:
+```sh
+python manage.py collectstatic --noinput
+python manage.py migrate
+gunicorn ai_support_platform.wsgi:application --bind 0.0.0.0:8000
+```
+
+3. Serve static/media files with Nginx or similar in production.
+
+## Windows Production Deployment (PowerShell)
+
+1. Build Docker image:
+```powershell
+docker build -t ai-support-platform .
+```
+2. Run Docker container:
+```powershell
+docker run -d -p 8000:8000 --env DJANGO_SUPERUSER_PASSWORD=admin ai-support-platform
+```
+3. Or run locally with Gunicorn (after collecting static files):
+```powershell
+python manage.py collectstatic --noinput
+python manage.py migrate
+gunicorn ai_support_platform.wsgi:application --bind 0.0.0.0:8000
+```
+4. For static/media files in production, use a reverse proxy (e.g., Nginx) or cloud storage.
+
+## Environment Variables
+- Set `DJANGO_SECRET_KEY`, `DEBUG`, and database settings for production.
+
+## API Docs
+- Swagger: `/swagger/`
+- ReDoc: `/redoc/`
+
+## Notes
+- Restrict `CORS_ALLOW_ALL_ORIGINS` in production.
+- Use HTTPS and secure credentials.
+
+## Security Notes
+- Set `DEBUG=0` and a strong `DJANGO_SECRET_KEY` in production.
+- Restrict `CORS_ALLOW_ALL_ORIGINS` to your frontend domain.
+- Use HTTPS in production.
+
 ---
 
 For more details, see Django documentation: https://docs.djangoproject.com/en/5.2/
