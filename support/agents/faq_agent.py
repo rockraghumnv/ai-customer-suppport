@@ -20,7 +20,7 @@ class FAQAgent:
 
         # Use Gemini LLM
         # Ensure GOOGLE_API_KEY environment variable is set
-        self.llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0)
+        self.llm = ChatGoogleGenerativeAI(model="models/gemini-1.5-flash", temperature=0)
         self.chain = self._build_rag_chain()
 
     def _load_vectorstore(self):

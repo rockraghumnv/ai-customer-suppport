@@ -1,0 +1,73 @@
+# Swagger API Testing Guide
+
+## Endpoints
+1. `/support/companies/` (GET/POST)
+2. `/support/companies/<id>/` (GET/PUT/DELETE)
+3. `/support/tickets/` (GET/POST)
+4. `/support/tickets/<id>/` (GET/PUT/DELETE)
+5. `/support/upload/` (POST)
+6. `/support/chat/` (POST)
+7. `/swagger/` (GET)
+8. `/redoc/` (GET)
+
+## Sample Input Data
+### 1. `/support/companies/` (POST)
+```json
+{
+    "name": "TechCorp",
+    "domain": "techcorp.com",
+    "description": "A technology company specializing in AI solutions."
+}
+```
+
+### 2. `/support/companies/<id>/` (PUT)
+```json
+{
+    "name": "TechCorp Updated",
+    "domain": "techcorp.com",
+    "description": "Updated description for TechCorp."
+}
+```
+
+### 3. `/support/tickets/` (POST)
+```json
+{
+    "user_email": "user@example.com",
+    "subject": "Issue with login",
+    "description": "I am unable to log in to my account.",
+    "status": "open"
+}
+```
+
+### 4. `/support/tickets/<id>/` (PUT)
+```json
+{
+    "user_email": "user@example.com",
+    "subject": "Updated issue with login",
+    "description": "I am still unable to log in to my account.",
+    "status": "in_progress"
+}
+```
+
+### 5. `/support/upload/` (POST)
+- Headers: `Content-Type: multipart/form-data`
+- Body:
+  ```
+  company: 1
+  file: <upload a file, e.g., faqs.txt>
+  ```
+
+### 6. `/support/chat/` (POST)
+```json
+{
+    "query": "What is the refund policy?",
+    "company": "techcorp.com",
+    "user_email": "user@example.com",
+    "image": "<upload an image file if needed>"
+}
+```
+
+## How to Use Swagger
+1. Start the server: `python manage.py runserver`
+2. Open Swagger UI: `http://127.0.0.1:8000/swagger/`
+3. Select an endpoint, enter input data, and click "Execute" to test.
