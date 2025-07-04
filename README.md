@@ -14,7 +14,7 @@ This project is a Django-based platform for managing support tickets, companies,
 
 ### 1. Clone the repository
 ```
-git clone <your-repo-url>
+git clone https://github.com/rockraghumnv/ai-customer-suppport
 cd hackthon
 ```
 
