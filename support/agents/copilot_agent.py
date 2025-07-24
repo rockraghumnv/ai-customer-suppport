@@ -2,7 +2,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from .chroma_utils import GoogleGenerativeAIEmbeddings
+<<<<<<< HEAD
 from chat.models import ChatMessage
+=======
+from support.models import ChatMessage
+>>>>>>> cd67d2aec22586fc568a9a49933775b19793c4b4
 
 class CopilotAgent:
     def __init__(self, ticket):

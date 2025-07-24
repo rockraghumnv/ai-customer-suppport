@@ -7,6 +7,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from PIL import Image
 import io
+<<<<<<< HEAD
+=======
+from docx import Document
+>>>>>>> cd67d2aec22586fc568a9a49933775b19793c4b4
 
 def metadata_func(record: dict, metadata: dict) -> dict:
     metadata["source"] = record.get("source")
@@ -31,6 +35,18 @@ def process_file_for_chroma(uploaded_file_instance):
         loader = PyPDFLoader(file_path)
     elif file_extension == '.json':
         loader = JSONLoader(file_path, jq_schema='.[]', content_key="answer", metadata_func=metadata_func)
+<<<<<<< HEAD
+=======
+    elif file_extension in ['.docx']:
+        # DOCX support
+        doc = Document(file_path)
+        full_text = '\n'.join([para.text for para in doc.paragraphs])
+        # Simulate a loader for docx
+        class DocxLoader:
+            def load(self):
+                return [{"page_content": full_text, "metadata": {"source": file_path}}]
+        loader = DocxLoader()
+>>>>>>> cd67d2aec22586fc568a9a49933775b19793c4b4
     elif file_extension in ['.jpg', '.jpeg', '.png', '.bmp', '.gif']:
         is_image = True
     # Add more file types as needed
