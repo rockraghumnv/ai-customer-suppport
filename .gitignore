@@ -1,0 +1,3 @@
+# Ignore files containing secrets
+chroma_db_1/chroma.sqlite3
+uploads/commonds_qgAiNZD.txt
