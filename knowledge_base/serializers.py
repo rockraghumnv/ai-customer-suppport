@@ -5,3 +5,4 @@ class UploadedFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadedFile
         fields = '__all__'
+        ref_name = "KnowledgeBaseUploadedFileSerializer"

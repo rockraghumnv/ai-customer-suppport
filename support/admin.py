@@ -1,11 +1,11 @@
 from django.contrib import admin
-<<<<<<< HEAD
 from companies.models import Company
 from tickets.models import Ticket 
 from knowledge_base.models import UploadedFile
-=======
-from .models import Company, Ticket, UploadedFile, Product, Service, ChatMessage, Feedback
->>>>>>> cd67d2aec22586fc568a9a49933775b19793c4b4
+from products.models import Product
+from services.models import Service
+from chat.models import ChatMessage
+from analytics.models import Feedback
 
 # Register your models here.
 admin.site.register(Company)

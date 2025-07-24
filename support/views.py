@@ -2,16 +2,11 @@ from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from rest_framework import status
-<<<<<<< HEAD
+# HEAD version: use modular imports for models and only necessary serializers
 from companies.models import Company
-from tickets.models import Ticket 
+from tickets.models import Ticket
 from knowledge_base.models import UploadedFile
 from .serializers import CompanySerializer, TicketSerializer, UploadedFileSerializer
-=======
-from .models import Company, Ticket, UploadedFile, Product, Service, ChatMessage, Feedback
-from .serializers import CompanySerializer, TicketSerializer, UploadedFileSerializer, ProductSerializer, ServiceSerializer, ChatMessageSerializer
->>>>>>> cd67d2aec22586fc568a9a49933775b19793c4b4
 # Import helper functions for ChromaDB integration (will implement next)
 from .agents.chroma_utils import process_file_for_chroma
 from rest_framework.views import APIView
