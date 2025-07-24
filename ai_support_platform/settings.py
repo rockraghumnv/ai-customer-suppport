@@ -45,18 +45,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
-    'drf_yasg',
     'support',
     'companies',
-    'rest_framework',
     'tickets',
     'knowledge_base',
     'chat',
     'analytics',
     'products',
     'services',
-    'drf_yasg',  # For API documentation
-    'corsheaders',  # For handling CORS headers
+    'drf_yasg',  # For API documentation  
 ]   
 
 MIDDLEWARE = [
