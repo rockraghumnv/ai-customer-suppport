@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Company, Ticket, UploadedFile
+from companies.models import Company
+from tickets.models import Ticket 
+from knowledge_base.models import UploadedFile
 
 # Register your models here.
 admin.site.register(Company)

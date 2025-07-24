@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Company, Ticket, UploadedFile
+from companies.models import Company
+from tickets.models import Ticket
+from knowledge_base.models import UploadedFile
 from rest_framework.exceptions import ValidationError
 
 class CompanySerializer(serializers.ModelSerializer):

@@ -3,7 +3,9 @@ from rest_framework import generics
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Company, Ticket, UploadedFile
+from companies.models import Company
+from tickets.models import Ticket 
+from knowledge_base.models import UploadedFile
 from .serializers import CompanySerializer, TicketSerializer, UploadedFileSerializer
 # Import helper functions for ChromaDB integration (will implement next)
 from .agents.chroma_utils import process_file_for_chroma

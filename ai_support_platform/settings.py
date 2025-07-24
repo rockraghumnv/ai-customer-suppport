@@ -38,7 +38,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'support',
-]
+    'companies',
+    'rest_framework',
+    'tickets',
+    'knowledge_base',
+    'chat',
+    'analytics',
+    'products',
+    'services',
+    'drf_yasg',  # For API documentation
+    'corsheaders',  # For handling CORS headers
+]   
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
