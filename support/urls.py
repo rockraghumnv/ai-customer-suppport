@@ -4,8 +4,11 @@ from .views_ticket import TicketListCreate, TicketDetail
 from .views_knowledge import FileUploadView, ProductListCreate, ProductDetail, ServiceListCreate, ServiceDetail
 from .views_chat import ChatMessageListView, ChatbotInteractionView, CopilotSummaryView
 from .views_analytics import AgentPerformanceLogListView, FeedbackCreateView, FeedbackListView
+from .views import UserRegisterView, UserLoginView
 
 urlpatterns = [
+    path('auth/register/', UserRegisterView.as_view(), name='user-register'),
+    path('auth/login/', UserLoginView.as_view(), name='user-login'),
     path('companies/', CompanyListCreateView.as_view(), name='company-list-create'),
     path('companies/<int:pk>/', CompanyDetailView.as_view(), name='company-detail'),
     path('tickets/', TicketListCreate.as_view(), name='ticket-list-create'),

@@ -8,6 +8,7 @@ from tickets.models import Ticket
 from knowledge_base.models import UploadedFile
 from .serializers import CompanySerializer, TicketSerializer, UploadedFileSerializer
 # Import helper functions for ChromaDB integration (will implement next)
+from chat.serializers import ChatMessageSerializer
 from .agents.chroma_utils import process_file_for_chroma
 from rest_framework.views import APIView
 # Import the agent router function (will implement next)
@@ -21,6 +22,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from langchain_google_genai import GoogleGenerativeAI
 import pytesseract
+from products.models import Product
+from products.serializers import ProductSerializer
+from services.models import Service
+from services.serializers import ServiceSerializer
 
 class CompanyListCreate(generics.ListCreateAPIView):
     queryset = Company.objects.all()
