@@ -94,6 +94,55 @@ gunicorn ai_support_platform.wsgi:application --bind 0.0.0.0:8000
 - Swagger: `/swagger/`
 - ReDoc: `/redoc/`
 
+## Architecture
+
+```mermaid
+flowchart TB
+	user[User or Client App]
+	web[Frontend or Client Channel]
+	api[Django REST API]
+	auth[Accounts App]
+	companies[Companies App]
+	tickets[Tickets App]
+	knowledge[Knowledge Base App]
+	chat[Chat App]
+	support[Support Agents]
+	analytics[Analytics App]
+	products[Products App]
+	services[Services App]
+	db[(MySQL Database)]
+	chroma[(ChromaDB)]
+	media[(Media Storage)]
+	ai[LLM Provider]
+
+	user --> web --> api
+
+	api --> auth
+	api --> companies
+	api --> tickets
+	api --> knowledge
+	api --> chat
+	api --> support
+	api --> analytics
+	api --> products
+	api --> services
+
+	auth --> db
+	companies --> db
+	tickets --> db
+	knowledge --> db
+	chat --> db
+	analytics --> db
+	products --> db
+	services --> db
+
+	knowledge --> chroma
+	knowledge --> media
+	support --> ai
+	tickets --> ai
+	knowledge --> ai
+```
+
 ## Notes
 - Restrict `CORS_ALLOW_ALL_ORIGINS` in production.
 - Use HTTPS and secure credentials.
