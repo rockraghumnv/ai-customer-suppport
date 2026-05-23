@@ -2,19 +2,36 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
-from django.contrib.auth.models import User
-from .models import Company
+from companies.models import Company
 
 class APISmokeTest(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.username = "apitestuser"
         self.password = "apitestpass"
+        self.company_email = "auth@authcompany.com"
         # Register user
-        resp = self.client.post(reverse('register'), {"username": self.username, "password": self.password}, format='json')
-        self.assertEqual(resp.status_code, 200)
-        self.token = resp.data['token']
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
+        resp = self.client.post(
+            reverse('auth-register'),
+            {
+                "username": self.username,
+                "password": self.password,
+                "company_name": "Auth Company",
+                "company_domain": "authcompany.com",
+                "company_email": self.company_email,
+                "business_type": "IT",
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 201)
+        login_resp = self.client.post(
+            reverse('auth-login'),
+            {"company_email": self.company_email, "password": self.password},
+            format='json',
+        )
+        self.assertEqual(login_resp.status_code, 200)
+        self.access = login_resp.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access}')
         # Create company
         self.company_data = {
             "name": "Test Company",
@@ -63,11 +80,11 @@ class APISmokeTest(APITestCase):
         print('GET /tickets/<id>/', resp.status_code)
         self.assertEqual(resp.status_code, 200)
         # Feedback
-        feedback_data = {"company": self.company_id, "user_email": "user@test.com", "rating": 5, "comment": "Great!"}
-        resp = self.client.post(reverse('feedback'), feedback_data, format='json')
+        feedback_data = {"ticket": ticket_id, "user": "user@test.com", "rating": 5, "comment": "Great!"}
+        resp = self.client.post(reverse('feedback-list-create'), feedback_data, format='json')
         print('POST /feedback/', resp.status_code)
         self.assertIn(resp.status_code, [200, 201])
-        resp = self.client.get(reverse('feedback-list'))
+        resp = self.client.get(reverse('feedback-list-create'))
         print('GET /feedback-list/', resp.status_code)
         self.assertEqual(resp.status_code, 200)
         # Chatbot (text only, no image)
@@ -85,9 +102,27 @@ class APIEdgeCaseTest(APITestCase):
         self.client = APIClient()
         self.username = "edgeuser"
         self.password = "edgepass"
-        resp = self.client.post(reverse('register'), {"username": self.username, "password": self.password}, format='json')
-        self.token = resp.data['token']
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
+        self.company_email = "auth@edgeauth.com"
+        resp = self.client.post(
+            reverse('auth-register'),
+            {
+                "username": self.username,
+                "password": self.password,
+                "company_name": "Edge Auth Company",
+                "company_domain": "edgeauth.com",
+                "company_email": self.company_email,
+                "business_type": "IT",
+            },
+            format='json',
+        )
+        login_resp = self.client.post(
+            reverse('auth-login'),
+            {"company_email": self.company_email, "password": self.password},
+            format='json',
+        )
+        self.assertEqual(login_resp.status_code, 200)
+        self.access = login_resp.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access}')
         self.company_data = {
             "name": "Edge Company",
             "domain": "edgecompany.com",
@@ -103,12 +138,12 @@ class APIEdgeCaseTest(APITestCase):
         resp = self.client.get(reverse('company-list-create'))
         self.assertEqual(resp.status_code, 401)
         # Try with invalid token
-        self.client.credentials(HTTP_AUTHORIZATION='Token invalidtoken')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer invalidtoken')
         resp = self.client.get(reverse('company-list-create'))
         self.assertEqual(resp.status_code, 401)
 
     def test_invalid_input(self):
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access}')
         # Missing required fields
         resp = self.client.post(reverse('company-list-create'), {}, format='json')
         self.assertEqual(resp.status_code, 400)

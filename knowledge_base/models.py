@@ -10,3 +10,15 @@ class UploadedFile(models.Model):
 
     def __str__(self):
         return self.file.name
+
+
+class FAQ(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='faqs')
+    question = models.CharField(max_length=500)
+    answer = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.company.name}: {self.question[:50]}"

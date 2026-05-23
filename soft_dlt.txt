@@ -1,0 +1,39 @@
+I’m grabbing exact line anchors for the company model and delete view so I can show where the audit and soft-delete hooks go.
+
+Searched for regex `class Company|deleted_at|is_active` (`ai-customer-suppport` · `companies/models.py`), 1 result
+
+Searched for regex `class CompanyDetailView|destroy|perform_destroy` (`ai-customer-suppport` · `companies/views.py`), 2 results
+
+Searched for text `class User` (`ai-customer-suppport` · `accounts/models.py`), 1 result
+
+Implement them in two layers: one new model for audit history, and one custom delete path in the company detail view.
+
+For the audit log, add a separate model in models.py or a new file under the same app. The model should store the company being removed, who removed it, when it happened, and optional context like a reason or a JSON snapshot of the company data. Since your user model lives in models.py, the audit model should point to `settings.AUTH_USER_MODEL` for the `deleted_by` field so it stays compatible with your custom user.
+
+A good shape is:
+
+- `company = ForeignKey(Company, ...)`
+- `deleted_by = ForeignKey(settings.AUTH_USER_MODEL, ...)`
+- `deleted_at = DateTimeField(auto_now_add=True)`
+- `reason = CharField` or `TextField`
+- `snapshot = JSONField` if you want to preserve the company data before deletion
+
+For soft delete, add fields to `Company` in models.py such as `is_active = BooleanField(default=True)` and `deleted_at = DateTimeField(null=True, blank=True)`. Then instead of calling the default hard delete, override delete behavior in views.py. The important part is to replace the default destroy flow with your own `destroy()` or `perform_destroy()` method.
+
+The flow should be:
+
+1. The request hits DELETE /companies/<pk>/.
+2. DRF authenticates the user using JWT.
+3. Your view checks whether the user is allowed to delete that company.
+4. You create an audit log row first.
+5. You mark the company inactive by setting `is_active = False` and `deleted_at = timezone.now()`.
+6. You save the company and return 204 No Content.
+
+If you want to keep it very strict, add one more rule before step 4: only allow company admins or platform superusers to delete. Right now your app does not have a role field, so that check would need to come from either `is_staff`, `is_superuser`, or a custom role field you add later.
+
+One important detail: because other models point to Company with cascade delete, soft delete is the safer approach. If you hard delete a company, linked tickets, FAQs, uploads, and other records can be removed too. Soft delete avoids that and keeps audit history intact.
+
+If you want, I can next show the exact code for:
+1. the CompanyDeletionLog model
+2. the soft-delete fields on Company
+3. the custom destroy method in CompanyDetailView

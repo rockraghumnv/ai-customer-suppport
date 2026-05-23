@@ -32,11 +32,14 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('auth/', include('accounts.urls')),
     path('companies/', include('companies.urls')),
     path('tickets/', include('tickets.urls')),
     path('knowledge/', include('knowledge_base.urls')),
     path('chat/', include('chat.urls')),
     path('analytics/', include('analytics.urls')),
+    path('products/', include('products.urls')),
+    path('services/', include('services.urls')),
     path('support/', include('support.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
