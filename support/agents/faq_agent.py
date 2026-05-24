@@ -1,17 +1,16 @@
 import os
 from django.conf import settings
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 
 class FAQAgent:
     def __init__(self, company):
         self.company = company
         self.chroma_dir = os.path.join(settings.BASE_DIR, f'chroma_db_{self.company.id}')
-        self.embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         self.vectorstore = self._load_vectorstore()
         if self.vectorstore:
             self.retriever = self.vectorstore.as_retriever()
@@ -52,14 +51,14 @@ Question: {question}
         )
         return chain
 
-    def handle_query(self, query: str) -> str:
+    def handle_query(self, query: str, context=None) -> dict:
         """Handles the user query using the RAG chain."""
         if not self.chain:
-            return "Sorry, the knowledge base is not available for this company."
+            return {"response": None, "fallback": True}
 
         try:
             response = self.chain.invoke(query)
-            return response
+            return {"response": response, "fallback": False}
         except Exception as e:
             print(f"Error during RAG chain invocation: {e}")
-            return "Sorry, I couldn't retrieve an answer from the knowledge base."
+            return {"response": None, "fallback": True}

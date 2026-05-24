@@ -1,4 +1,4 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -10,7 +10,8 @@ class TroubleshootingAgent:
         self.company = company
         self.chroma_dir = os.path.join(settings.BASE_DIR, f'chroma_db_{self.company.id}')
         self.llm = ChatGoogleGenerativeAI(model="models/gemini-1.5-flash", temperature=0)
-        self.vectorstore = Chroma(persist_directory=self.chroma_dir, embedding_function=self.llm.embeddings)
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        self.vectorstore = Chroma(persist_directory=self.chroma_dir, embedding_function=embeddings)
         self.retriever = self.vectorstore.as_retriever()
         self.prompt = ChatPromptTemplate.from_template("""You are a troubleshooting agent. Use the following context to guide the user through troubleshooting steps for their issue.\n{context}\n\nQuestion: {question}""")
         self.chain = ({"context": self.retriever, "question": lambda x: x["query"]} | self.prompt | self.llm | StrOutputParser())

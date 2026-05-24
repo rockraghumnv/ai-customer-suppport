@@ -1,4 +1,5 @@
 from rest_framework import generics
+from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,9 +11,25 @@ class TicketListCreateView(generics.ListCreateAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        return self.queryset.filter(
+            company=user.company,
+        ).filter(
+            Q(user_email=user.email) | Q(assigned_to=user)
+        )
+
 class TicketDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return self.queryset.filter(
+            company=user.company,
+        ).filter(
+            Q(user_email=user.email) | Q(assigned_to=user)
+        )
 
 
 class TicketAutomationView(APIView):
