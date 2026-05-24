@@ -108,71 +108,59 @@ def classify_intent(query: str) -> dict:
 def route_query_to_agent(query: str, company, user_email):
     context = get_context(user_email)
     update_context(user_email, {"role": "user", "content": query})
-    agent_scores = []
-
     intent_result = classify_intent(query)
     intent = intent_result["intent"]
     intent_confidence = intent_result["confidence"]
+    agent_scores = []
 
-    responses = {}
-
-    # 1. FAQ Agent
-    faq_agent = FAQAgent(company)
-    faq_response = faq_agent.handle_query(query, context=context)
-    agent_scores.append(("FAQ", faq_response, get_confidence_score(faq_response)))
-    responses["FAQ"] = faq_response
-
-    # 2. Info Agent
-    info_agent = InfoAgent(company)
-    info_response = info_agent.handle_query(query, context=context)
-    agent_scores.append(("Info", info_response, get_confidence_score(info_response)))
-    responses["INFO"] = info_response
-
-    # 3. Troubleshooting Agent
-    troubleshooting_agent = TroubleshootingAgent(company)
-    troubleshooting_response = troubleshooting_agent.handle_query(query, context=context)
-    agent_scores.append(("Troubleshooting", troubleshooting_response, get_confidence_score(troubleshooting_response)))
-    responses["TROUBLESHOOTING"] = troubleshooting_response
-
-    # 4. General Purpose Agent
-    general_agent = GeneralPurposeAgent(company)
-    general_response = general_agent.handle_query(query, context=context)
-    agent_scores.append(("General", general_response, get_confidence_score(general_response)))
-    responses["GENERAL"] = general_response
-
-    # Prefer classifier intent if confident and strong
-    selected = responses.get(intent)
-    if selected and not selected.get("fallback", False) and not is_weak_response(selected):
-        if intent_confidence >= 0.6 and get_confidence_score(selected) >= 0.7:
-            update_context(user_email, {"role": "agent", "content": selected["response"]})
-            reset_failed_attempts(user_email)
-            return selected["response"]
-
-    # Otherwise pick the strongest agent response
-    best_name = None
-    best_resp = None
-    best_score = 0.0
-    for name, resp, score in agent_scores:
-        if not resp or resp.get("fallback", False) or is_weak_response(resp):
-            continue
-        if score > best_score:
-            best_name = name
-            best_resp = resp
-            best_score = score
-
-    if best_resp and best_score >= 0.7:
-        if not should_handoff_to_human(query, best_resp, best_score, failed_attempts(user_email)):
-            update_context(user_email, {"role": "agent", "content": best_resp["response"]})
-            reset_failed_attempts(user_email)
-            return best_resp["response"]
+    # Immediate human fallback if user explicitly says prior answer was not helpful
+    if user_says_not_helpful(query):
         record_failed_attempt(user_email)
+        return _create_human_fallback_ticket(query, company, user_email, agent_scores)
+
+    # If intent classifier itself is not confident, handoff to human
+    if intent_confidence < 0.6:
+        record_failed_attempt(user_email)
+        return _create_human_fallback_ticket(query, company, user_email, agent_scores)
+
+    # Route only to the selected intent agent (do not call all agents)
+    if intent == "FAQ":
+        selected_agent_name = "FAQ"
+        selected_agent = FAQAgent(company)
+    elif intent == "INFO":
+        selected_agent_name = "INFO"
+        selected_agent = InfoAgent(company)
+    elif intent == "TROUBLESHOOTING":
+        selected_agent_name = "TROUBLESHOOTING"
+        selected_agent = TroubleshootingAgent(company)
     else:
-        record_failed_attempt(user_email)
+        selected_agent_name = "GENERAL"
+        selected_agent = GeneralPurposeAgent(company)
 
-    if should_handoff_to_human(query, best_resp, best_score, failed_attempts(user_email)):
-        pass
+    selected_response = selected_agent.handle_query(query, context=context)
+    selected_score = get_confidence_score(selected_response)
+    agent_scores.append((selected_agent_name, selected_response, selected_score))
 
-    # 5. Fallback: Create a ticket
+    if (
+        selected_response
+        and not selected_response.get("fallback", False)
+        and not should_handoff_to_human(
+            query,
+            selected_response,
+            selected_score,
+            failed_attempts(user_email),
+        )
+    ):
+        update_context(user_email, {"role": "agent", "content": selected_response["response"]})
+        reset_failed_attempts(user_email)
+        return selected_response["response"]
+
+    record_failed_attempt(user_email)
+    return _create_human_fallback_ticket(query, company, user_email, agent_scores)
+
+
+def _create_human_fallback_ticket(query: str, company, user_email: str, agent_scores):
+    # Fallback: Create a ticket for human agent
     ticket = Ticket.objects.create(
         company=company,
         user_email=user_email,
@@ -181,6 +169,7 @@ def route_query_to_agent(query: str, company, user_email):
         assigned_to=None
     )
     print(f"Ticket created: {ticket.id} for {user_email} at {company.name}. Needs human agent attention.")
+
     # Log agent scores for performance monitoring
     from support.models import AgentPerformanceLog
     for agent_name, resp, score in agent_scores:
