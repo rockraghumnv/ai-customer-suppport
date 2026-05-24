@@ -4,7 +4,15 @@ This project is a Django-based platform for managing support tickets, companies,
 
 ## Project Structure
 - `ai_support_platform/`: Django project settings and configuration
-- `support/`: Main app for support ticketing, companies, and file uploads
+- `support/`: Support agents and chat workflows
+- `accounts/`: Authentication and user management
+- `companies/`: Company data
+- `tickets/`: Ticket CRUD and automation
+- `knowledge_base/`: Uploads, FAQs, and knowledge improvements
+- `chat/`: Chat message history
+- `analytics/`: Logs, performance, and summaries
+- `products/`: Products catalog
+- `services/`: Services catalog
 - `media/`: Uploaded files
 - `requirements.txt`: Python dependencies
 - `Dockerfile`: (To be completed for containerization)
@@ -15,13 +23,13 @@ This project is a Django-based platform for managing support tickets, companies,
 ### 1. Clone the repository
 ```
 git clone https://github.com/rockraghumnv/ai-customer-suppport
-cd hackthon
+cd ai-customer-suppport
 ```
 
 ### 2. Create and activate a virtual environment
 ```
 python -m venv venv
-.\venv\Scripts\activate
+source venv/bin/activate
 ```
 
 ### 3. Install dependencies
@@ -96,51 +104,28 @@ gunicorn ai_support_platform.wsgi:application --bind 0.0.0.0:8000
 
 ## Architecture
 
-```mermaid
-flowchart TB
-	user[User or Client App]
-	web[Frontend or Client Channel]
-	api[Django REST API]
-	auth[Accounts App]
-	companies[Companies App]
-	tickets[Tickets App]
-	knowledge[Knowledge Base App]
-	chat[Chat App]
-	support[Support Agents]
-	analytics[Analytics App]
-	products[Products App]
-	services[Services App]
-	db[(MySQL Database)]
-	chroma[(ChromaDB)]
-	media[(Media Storage)]
-	ai[LLM Provider]
-
-	user --> web --> api
-
-	api --> auth
-	api --> companies
-	api --> tickets
-	api --> knowledge
-	api --> chat
-	api --> support
-	api --> analytics
-	api --> products
-	api --> services
-
-	auth --> db
-	companies --> db
-	tickets --> db
-	knowledge --> db
-	chat --> db
-	analytics --> db
-	products --> db
-	services --> db
-
-	knowledge --> chroma
-	knowledge --> media
-	support --> ai
-	tickets --> ai
-	knowledge --> ai
+```
+User/Client
+   |
+   v
+Frontend or Channel (Web/Mobile/Chat)
+   |
+   v
+Django REST API
+   |-- Accounts
+   |-- Companies
+   |-- Tickets
+   |-- Knowledge Base
+   |-- Chat
+   |-- Support Agents
+   |-- Analytics
+   |-- Products
+   |-- Services
+   |
+   +--> MySQL Database
+   +--> Media Storage
+   +--> ChromaDB (RAG index)
+   +--> LLM Provider (Gemini)
 ```
 
 ## Notes
